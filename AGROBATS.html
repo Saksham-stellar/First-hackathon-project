@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SmartKrishi - AI Crop Recommendation</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+html, body {
+  margin:0;
+  font-family: 'Poppins', sans-serif;
+  background:#0f2027;
+  color:#fff;
+  scroll-behavior:smooth;
+}
+
+.navbar {
+  position: fixed;
+  top:0; left:0; right:0;
+  z-index:200;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:18px 40px;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+}
+.logo { font-size:1.6rem; font-weight:700; color:#00ff99; }
+.tabs { display:flex; gap:24px; align-items:center; }
+.tabs div {
+  cursor:pointer;
+  padding:6px 8px;
+  transition: all .18s ease;
+  color: rgba(255,255,255,0.9);
+}
+.tabs div:hover { transform:translateY(-2px); color:#00ff99; }
+.tabs div.active { color:#00ff99; font-weight:600; box-shadow: inset 0 -3px 0 #00ff99; }
+
+/* Sections */
+section {
+  display:none;
+  padding: 60px 20px;
+  min-height: 100vh;
+  animation: fadeIn .6s ease;
+}
+section.active { display:block; }
+@keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;} }
+
+/* Home */
+#home {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
+              url("WhatsApp Image 2025-09-20 at 11.58.00 AM.jpeg") no-repeat center center/cover;
+}
+/* Home */
+#home {
+  position: relative;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  min-height: 100vh;
+  background: url("WhatsApp Image 2025-09-20 at 11.58.00 AM.jpeg") no-repeat center center/cover;
+}
+
+/* Fullscreen dark overlay */
+#home::before {
+  content:"";
+  position:absolute;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+  z-index:0;
+}
+
+#home .overlay {
+  position: relative;
+  z-index:1;
+  padding: 72px 26px;
+  border-radius: 14px;
+  max-width: 920px;
+  width: calc(100% - 40px);
+  text-shadow:0 6px 18px rgba(0,0,0,0.6);
+}
+
+#home h1 { 
+  margin:0; 
+  font-size:2.8rem; 
+  color:#00ff99;
+}
+#home p { 
+  margin-top:14px; 
+  font-size:1.05rem; 
+  line-height:1.6; 
+  color: rgba(255,255,255,0.92);
+}
+
+/* Glowing CTA button */
+.cta-btn {
+  background: linear-gradient(135deg, #9dddbf, #00CC66);
+  color: #061221;
+  font-weight: 700;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,255,136,0.5);
+  transition: transform 0.2s ease-in-out;
+}
+.cta-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(0,255,136,0.8);
+}
+
+
+@keyframes pulse {
+  0% { box-shadow:0 0 12px rgba(0,255,153,0.4); }
+  50% { box-shadow:0 0 28px rgba(0,255,153,0.9); }
+  100% { box-shadow:0 0 12px rgba(0,255,153,0.4); }
+}
+
+#home h1 { margin:0; font-size:2.8rem; color:#00ff99; text-shadow:0 6px 18px rgba(0,0,0,0.6);}
+#home p { margin-top:14px; font-size:1.05rem; line-height:1.6; color: rgba(255,255,255,0.92);}
+
+/* Cards / form */
+.card { background: rgba(255,255,255,0.06); padding:26px; border-radius:14px; max-width:920px; margin:12px auto; }
+.form-grid { display:grid; grid-template-columns: repeat(2,1fr); gap:18px; }
+@media(max-width:720px){ .form-grid { grid-template-columns:1fr; } }
+label { display:block; margin-bottom:6px; font-weight:500; color:#e9fef0; }
+input[type="number"] {
+  width:100%; padding:10px 12px; border-radius:8px; border:none;
+  background: rgba(255,255,255,0.08); color:#fff; font-size:0.95rem;
+}
+input[type="number"]::placeholder{ color: rgba(255,255,255,0.6); }
+input[type="number"]:focus{ outline:2px solid rgba(0,255,153,0.12); background: rgba(255,255,255,0.1); }
+
+button {
+  width:100%; padding:12px 16px; border-radius:10px; border:none; cursor:pointer;
+  background:#00ff99; color:#012; font-weight:700; font-size:1rem;
+  transition: transform .12s ease, background .12s ease;
+}
+button:hover { transform: translateY(-2px); background:#00cc77; }
+
+#result {
+  margin-top:18px; padding:12px; border-radius:10px;
+  background: rgba(0,255,153,0.06); color:#eafaf1; border:1px dashed rgba(0,255,153,0.16);
+  text-align:center;
+}
+#result button{ width:auto; display:inline-block; margin:2px; }
+
+.viz-container { display:grid; gap:20px; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); max-width:1100px; margin:6px auto 40px; padding:8px; }
+.viz-card { padding:16px; border-radius:12px; background: rgba(255,255,255,0.04); text-align:center; }
+.viz-card h3 { margin-top:8px; margin-bottom:12px; color:#bffff0; font-weight:600; }
+.placeholder { padding:18px; color: rgba(255,255,255,0.75); }
+canvas { display:block; width:100% !important; height:320px; border-radius:12px; padding:10px; }
+
+footer { text-align:center; color: rgba(255,255,255,0.6); margin: 30px auto; max-width:1100px; }
+
+/* Small screen tweaks */
+@media(max-width:480px){
+  #home h1{ font-size:1.8rem; }
+  #home .overlay{ padding:34px 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo">🌱 SMARTKRISHI</div>
+  <div class="tabs">
+    <div onclick="showTab('home')" id="tab-home" class="active">Home</div>
+    
+
+    <div onclick="showTab('visualization')" id="tab-visualization">Visualization</div>
+    <div onclick="showTab('about')" id="tab-about">About</div>
+  </div>
+</div>
+
+<!-- Home -->
+<section id="home" class="active">
+  <div class="overlay">
+    <h1>Welcome to SmartKrishi</h1>
+    <p>SmartKrishi uses AI to recommend the best crops based on soil nutrients, pH, rainfall, temperature, and location.</p>
+    <button class="cta-btn" onclick="showTab('engine')">🚀 Click Here to Use Engine
+
+  
+ 
+   </button>
+  </div>
+
+</section>
+
+<!-- Engine -->
+<section id="engine">
+  <h2 style="text-align:center; color:#00ff99; margin-bottom:18px;">🌾 AI Crop Recommendation Engine</h2>
+  <div class="card">
+    <div class="form-grid">
+      <div>
+        <label for="nitrogen">🧪 Nitrogen (N)</label>
+        <input type="number" id="nitrogen" placeholder="e.g., 90">
+      </div>
+      <div>
+        <label for="phosphorus">⚗️ Phosphorus (P)</label>
+        <input type="number" id="phosphorus" placeholder="e.g., 40">
+      </div>
+      <div>
+        <label for="potassium">🧫 Potassium (K)</label>
+        <input type="number" id="potassium" placeholder="e.g., 40">
+      </div>
+      <div>
+        <label for="ph">🧪 Soil pH</label>
+        <input type="number" step="0.1" id="ph" placeholder="e.g., 6.5">
+      </div>
+      <div>
+        <label for="rainfall">🌧️ Rainfall (mm)</label>
+        <input type="number" id="rainfall" placeholder="e.g., 200">
+      </div>
+      <div>
+        <label for="temperature">🌡️ Temperature (°C)</label>
+        <input type="number" step="0.1" id="temperature" placeholder="e.g., 25.5">
+      </div>
+    </div>
+    <div style="margin-top:18px;">
+      <button onclick="recommendCrop()">🚀 Get Crop Recommendation</button>
+      <div id="result" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Visualization -->
+<section id="visualization">
+  <h2 style="text-align:center; color:#00ff99; margin-bottom:18px;">📊 Visualization Dashboard</h2>
+  <div class="viz-container">
+    <div class="viz-card">
+      <h3>🌐 Field Parameters</h3>
+      <div id="radarPlaceholder" class="placeholder">Enter inputs and press the button to see the radar chart.</div>
+      <canvas id="radarChart" style="display:none;"></canvas>
+    </div>
+    <div class="viz-card">
+      <h3>📏 Nutrient & Climate Levels</h3>
+      <div id="barPlaceholder" class="placeholder">Bar chart will appear here after prediction.</div>
+      <canvas id="barChart" style="display:none;"></canvas>
+    </div>
+    <div class="viz-card">
+      <h3>🌱 Recommended Crop</h3>
+      <div id="cropPlaceholder" class="placeholder">Recommended crop summary will appear here.</div>
+      <canvas id="cropChart" style="display:none;"></canvas>
+      <div id="cropName" style="margin-top:12px;font-weight:700;color:#00ff99"></div>
+    </div>
+  </div>
+</section>
+
+<!-- About -->
+<!-- About -->
+<section id="about">
+  <div class="card">
+    <h1 style="color:#00ff99; margin-bottom:12px;">🤖 About SmartKrishi</h1>
+    <p>
+      SmartKrishi is an <b>AI-based crop recommendation system</b> designed to help farmers choose the most
+      suitable crop for their soil and climate conditions.  
+      Our model uses <b>rule-based scoring with explainability</b> — meaning it compares soil nutrient values,
+      pH, rainfall, and temperature against ideal crop ranges and assigns scores.  
+      This ensures <b>transparency and trust</b>, so farmers understand <i>why</i> a crop is recommended.
+    </p>
+
+    <h2 style="color:#00ff99; margin-top:28px;">🌟 Why Our Model?</h2>
+    <ul>
+      <li>Uses soil nutrient data (N, P, K, pH), climate, and rainfall inputs.</li>
+      <li>Calculates suitability scores for multiple crops.</li>
+      <li>Explains the reasoning — not just “black box” predictions.</li>
+      <li>Visualizes data with radar, bar, and doughnut charts for easy interpretation.</li>
+    </ul>
+
+    <h2 style="color:#00ff99; margin-top:28px;">👨‍👩‍👧‍👦 Team AGROBATS</h2>
+    <p>
+      We are a passionate team of first-year students, building technology for agriculture.
+      Our goal is to empower farmers with simple yet powerful AI tools.
+    </p>
+    <ul style="columns:2; -webkit-columns:2; -moz-columns:2;">
+      <li>🌱 Saksham</li>
+      <li>🌱 Saksham Jain</li>
+      <li>🌱 Ayush Pandey</li>
+      <li>🌱 Varsha</li>
+      <li>🌱 Tushar</li>
+      <li>🌱 Tanishq</li>
+    </ul>
+
+    <p style="margin-top:24px; font-style:italic; color:#ccc;">
+      Together, we are <b>AGROBATS</b> — innovating agriculture with AI ✨
+    </p>
+  </div>
+</section>
+
+<footer>SMARTKRISHI — Prototype documentation · Built for farmers · Keep it simple, explainable and actionable.</footer>
+
+<script>
+// Tab switching
+function showTab(tabId){
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(tabId).classList.add("active");
+  document.querySelectorAll('.tabs div').forEach(t=>t.classList.remove("active"));
+  const tabEl=document.getElementById('tab-'+tabId);
+  if(tabEl) tabEl.classList.add("active");
+
+  // 👇 smooth scroll into view when CTA is clicked
+  document.getElementById(tabId).scrollIntoView({behavior:"smooth"});
+}
+
+
+// Location
+let userLocation=null;
+if(navigator.geolocation){
+  navigator.geolocation.getCurrentPosition(pos=>{
+    userLocation={lat:pos.coords.latitude,lon:pos.coords.longitude};
+  });
+}
+
+// Crop database
+const crops=[
+  {name:"Wheat",ideal:{N:[50,120],P:[30,70],K:[30,80],pH:[6,7.5],rain:[50,120],temp:[15,25]}},
+  {name:"Rice",ideal:{N:[80,150],P:[40,90],K:[40,90],pH:[5,6.5],rain:[150,300],temp:[20,30]}},
+  {name:"Sugarcane",ideal:{N:[100,200],P:[50,120],K:[60,150],pH:[6,7.5],rain:[200,400],temp:[20,35]}},
+  {name:"Cotton",ideal:{N:[60,130],P:[30,70],K:[40,100],pH:[6,8],rain:[60,120],temp:[25,35]}},
+  {name:"Maize",ideal:{N:[80,150],P:[40,80],K:[40,90],pH:[5.5,7.5],rain:[60,150],temp:[18,27]}},
+  {name:"Barley",ideal:{N:[40,100],P:[20,60],K:[20,70],pH:[6,7.5],rain:[40,100],temp:[12,25]}}
+];
+
+let top3=[],fieldValues=[];
+
+function recommendCrop(){
+  let N=parseFloat(document.getElementById("nitrogen").value);
+  let P=parseFloat(document.getElementById("phosphorus").value);
+  let K=parseFloat(document.getElementById("potassium").value);
+  let pH=parseFloat(document.getElementById("ph").value);
+  let rain=parseFloat(document.getElementById("rainfall").value);
+  let temp=parseFloat(document.getElementById("temperature").value);
+
+  if([N,P,K,pH,rain,temp].some(v=>isNaN(v))){
+    document.getElementById("result").innerText="⚠️ Please fill all fields.";
+    return;
+  }
+
+  fieldValues=[N,P,K,pH,rain,temp];
+
+  let scored=crops.map(c=>{
+    let score=0;
+    const {N:Ni,P:Pi,K:Ki,pH:phI,rain:Ri,temp:Ti}=c.ideal;
+    score+=withinRange(N,Ni)+withinRange(P,Pi)+withinRange(K,Ki)+withinRange(pH,phI)+withinRange(rain,Ri)+withinRange(temp,Ti);
+    return {name:c.name,score};
+  });
+  scored.sort((a,b)=>b.score-a.score);
+  top3=scored.slice(0,3);
+
+  let loc=userLocation? `<br>📍 (${userLocation.lat.toFixed(2)}, ${userLocation.lon.toFixed(2)})`:"";
+  let text="🌾 Top 3 Recommended Crops:<br>"+top3.map((c,i)=>`<button onclick="highlightCrop('${c.name}')">${i+1}. ${c.name} (Score:${c.score})</button>`).join("<br>");
+  document.getElementById("result").innerHTML=text+loc;
+
+  showTab('visualization');
+  updateCharts(fieldValues, top3[0].name);
+}
+
+function withinRange(value,range){
+  if(value>=range[0]&&value<=range[1]) return 2;
+  if(Math.abs(value-range[0])<=10||Math.abs(value-range[1])<=10) return 1;
+  return 0;
+}
+
+let radarChart,barChart,cropChart;
+
+function updateCharts(values,cropName){
+  const labels=["Nitrogen","Phosphorus","Potassium","pH","Rainfall","Temperature"];
+  const colors=['#00ff99','#00cc77','#00ffaa','#3399ff','#ff9933','#ff4d4d'];
+
+  document.getElementById('radarPlaceholder').style.display='none';
+  document.getElementById('barPlaceholder').style.display='none';
+  document.getElementById('cropPlaceholder').style.display='none';
+  document.getElementById('radarChart').style.display='block';
+  document.getElementById('barChart').style.display='block';
+  document.getElementById('cropChart').style.display='block';
+
+  if(radarChart) radarChart.destroy();
+  if(barChart) barChart.destroy();
+  if(cropChart) cropChart.destroy();
+
+  radarChart=new Chart(document.getElementById('radarChart'),{
+    type:'radar',
+    data:{labels,datasets:[{label:"Field Parameters",data:values,backgroundColor:'rgba(0,255,153,0.3)',borderColor:'#00ff99',pointBackgroundColor:colors}]},
+    options:{scales:{r:{grid:{color:'#444'},pointLabels:{color:'#fff'}}}}
+  });
+
+  barChart=new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{labels,datasets:[{data:values,backgroundColor:colors}]},
+    options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#fff'}},y:{ticks:{color:'#fff'},beginAtZero:true}}}
+  });
+
+  let selected=top3.find(c=>c.name===cropName)||top3[0];
+  cropChart=new Chart(document.getElementById('cropChart'),{
+    type:'doughnut',
+    data:{labels:top3.map(c=>c.name),datasets:[{data:top3.map(c=>c.score),backgroundColor:["#00ff99","#ff9933","#3399ff"]}]},
+    options:{cutout:"70%",plugins:{legend:{labels:{color:'#fff'}}}}
+  });
+
+  document.getElementById("cropName").innerText="🌱 "+selected.name+" (Best option)";
+}
+
+function highlightCrop(cropName){ updateCharts(fieldValues,cropName); }
+</script>
+</body>
+</html>
